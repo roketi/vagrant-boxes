@@ -1,0 +1,5 @@
+---
+# Puppet Modules
+base::modules:
+  - "roketi::panel"
+

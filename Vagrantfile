@@ -28,6 +28,46 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # SSH Options
   config.ssh.forward_agent = true
 
+  # roketi-panel
+  config.vm.define "roketi-panel" do  |node|
+    name          = "roketi-panel"
+    aliases       = "panel.example.net"
+
+    # vagrant-hostmanager
+    if Vagrant.has_plugin?('vagrant-hostmanager')
+      # get current ip address
+      node.hostmanager.ip_resolver = proc do |vm, resolving_vm|
+        if hostname = (vm.ssh_info && vm.ssh_info[:host])
+          `vagrant ssh roketi-panel -c "/sbin/ifconfig" | grep "inet addr" | head -n 1 | egrep -o "[0-9\.]+" | head -n 1 2>&1`.split("\n").first[/(\d+\.\d+\.\d+\.\d+)/, 1]
+        end
+      end
+
+      # set Aliases
+      if not aliases.to_s.empty?
+        node.hostmanager.aliases = name.to_s + " " + aliases.to_s
+      end
+
+      # Run the hostmanager plugin
+      node.vm.provision :hostmanager
+    end
+
+    # set Hostname
+    node.vm.hostname =  "%s.#{domain}" % name.to_s
+
+    # install Dependencies
+    node.vm.provision "shell", inline: "echo 'deb http://ftp.ch.debian.org/debian wheezy main' > /etc/apt/sources.list"
+    node.vm.provision "shell", inline: "APTSRC=$(mktemp) && wget -q https://apt.puppetlabs.com/puppetlabs-release-wheezy.deb -O ${APTSRC} && dpkg -i ${APTSRC} && rm ${APTSRC}"
+    node.vm.provision "shell", inline: "apt-get update -qq && apt-get upgrade -y"
+    node.vm.provision "shell", inline: "apt-get install -y puppet"
+ 
+    # execute Puppet
+    node.vm.provision "puppet" do |puppet|
+      puppet.hiera_config_path = "puppet-data/hiera.yaml"
+      puppet.manifests_path    = "puppet-data"
+      puppet.module_path       = "puppet-modules"
+    end
+  end
+
   # roketi-webserver1
   config.vm.define "roketi-webserver1" do  |node|
     name          = "roketi-webserver1"
@@ -57,7 +97,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # install Dependencies
     node.vm.provision "shell", inline: "echo 'deb http://ftp.ch.debian.org/debian wheezy main' > /etc/apt/sources.list"
     node.vm.provision "shell", inline: "APTSRC=$(mktemp) && wget -q https://apt.puppetlabs.com/puppetlabs-release-wheezy.deb -O ${APTSRC} && dpkg -i ${APTSRC} && rm ${APTSRC}"
-    node.vm.provision "shell", inline: "apt-get update && apt-get upgrade -y"
+    node.vm.provision "shell", inline: "apt-get update -qq && apt-get upgrade -y"
     node.vm.provision "shell", inline: "apt-get install -y puppet"
  
     # execute Puppet
@@ -97,7 +137,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # install Dependencies
     node.vm.provision "shell", inline: "echo 'deb http://ftp.ch.debian.org/debian wheezy main' > /etc/apt/sources.list"
     node.vm.provision "shell", inline: "APTSRC=$(mktemp) && wget -q https://apt.puppetlabs.com/puppetlabs-release-wheezy.deb -O ${APTSRC} && dpkg -i ${APTSRC} && rm ${APTSRC}"
-    node.vm.provision "shell", inline: "apt-get update && apt-get upgrade -y"
+    node.vm.provision "shell", inline: "apt-get update -qq && apt-get upgrade -y"
     node.vm.provision "shell", inline: "apt-get install -y puppet"
  
     # execute Puppet
