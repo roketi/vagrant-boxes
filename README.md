@@ -20,11 +20,18 @@ vagrant plugin install vagrant-lxc
 ## Usage
 
 ```
-vagrant up
-vagrant provision
+vagrant up --provider=lxc
+vagrant provision (required due to some Host/Domainname related Bugs)
 vagrant halt
 vagrant destroy 
 ```
+
+
+## Servers
+
+- Panel (vagrant ssh roketi-panel, panel.example.net)
+- Webserver 1 (vagrant ssh roketi-webserver1, www.example.net)
+- Mailserver 1 (vagrant ssh roketi-mailserver1, mail.example.net)-
 
 
 ## Puppet
