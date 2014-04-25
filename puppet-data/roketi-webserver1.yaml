@@ -1,0 +1,14 @@
+---
+# Puppet Modules
+base::modules:
+  - "roketi::webserver"
+
+# vHosts
+roketi::webserver::vHosts: 
+  "customer1":
+    "server": "nginx"
+    "type": "standalone"
+    "domains":
+      - "www.example.com"
+      - "www.example.net"
+
