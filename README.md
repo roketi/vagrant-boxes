@@ -28,9 +28,9 @@ vagrant destroy
 
 ## Servers
 
-- Panel (vagrant ssh roketi-panel, panel.example.net)
-- Webserver 1 (vagrant ssh roketi-webserver1, www.example.net)
-- Mailserver 1 (vagrant ssh roketi-mailserver1, mail.example.net)-
+- Panel (vagrant ssh panel, panel.example.net)
+- Webserver 1 (vagrant ssh webserver1, www.example.net)
+- Mailserver 1 (vagrant ssh mailserver1, mail.example.net)
 
 
 ## Puppet
