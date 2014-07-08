@@ -9,7 +9,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   network       = "192.168.55.0/24"
 
   # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "fgrehm/wheezy64-lxc"
+  config.vm.box = "puppetlabs/debian-7.4-32-puppet"
 
   # vagrant-cachier
   if Vagrant.has_plugin?('vagrant-cachier')
@@ -38,7 +38,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # get current ip address
       node.hostmanager.ip_resolver = proc do |vm, resolving_vm|
         if hostname = (vm.ssh_info && vm.ssh_info[:host])
-          `vagrant ssh roketi-panel -c "/sbin/ifconfig" | grep "inet addr" | head -n 1 | egrep -o "[0-9\.]+" | head -n 1 2>&1`.split("\n").first[/(\d+\.\d+\.\d+\.\d+)/, 1]
+          `vagrant ssh roketi-panel -c "facter ipaddress"`.split("\n").first[/(\d+\.\d+\.\d+\.\d+)/, 1]
         end
       end
 
@@ -54,12 +54,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # set Hostname
     node.vm.hostname =  "%s.#{domain}" % name.to_s
 
-    # install Dependencies
-    node.vm.provision "shell", inline: "echo 'deb http://ftp.ch.debian.org/debian wheezy main' > /etc/apt/sources.list"
-    node.vm.provision "shell", inline: "APTSRC=$(mktemp) && wget -q https://apt.puppetlabs.com/puppetlabs-release-wheezy.deb -O ${APTSRC} && dpkg -i ${APTSRC} && rm ${APTSRC}"
-    node.vm.provision "shell", inline: "apt-get update -qq && apt-get upgrade -y"
-    node.vm.provision "shell", inline: "apt-get install -y puppet"
- 
     # execute Puppet
     node.vm.provision "puppet" do |puppet|
       puppet.hiera_config_path = "puppet-data/hiera.yaml"
@@ -78,7 +72,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # get current ip address
       node.hostmanager.ip_resolver = proc do |vm, resolving_vm|
         if hostname = (vm.ssh_info && vm.ssh_info[:host])
-          `vagrant ssh roketi-webserver1 -c "/sbin/ifconfig" | grep "inet addr" | head -n 1 | egrep -o "[0-9\.]+" | head -n 1 2>&1`.split("\n").first[/(\d+\.\d+\.\d+\.\d+)/, 1]
+          `vagrant ssh roketi-webserver1 -c "facter ipaddress"`.split("\n").first[/(\d+\.\d+\.\d+\.\d+)/, 1]
         end
       end
 
@@ -94,12 +88,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # set Hostname
     node.vm.hostname =  "%s.#{domain}" % name.to_s
 
-    # install Dependencies
-    node.vm.provision "shell", inline: "echo 'deb http://ftp.ch.debian.org/debian wheezy main' > /etc/apt/sources.list"
-    node.vm.provision "shell", inline: "APTSRC=$(mktemp) && wget -q https://apt.puppetlabs.com/puppetlabs-release-wheezy.deb -O ${APTSRC} && dpkg -i ${APTSRC} && rm ${APTSRC}"
-    node.vm.provision "shell", inline: "apt-get update -qq && apt-get upgrade -y"
-    node.vm.provision "shell", inline: "apt-get install -y puppet"
- 
     # execute Puppet
     node.vm.provision "puppet" do |puppet|
       puppet.hiera_config_path = "puppet-data/hiera.yaml"
@@ -118,7 +106,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # get current ip address
       node.hostmanager.ip_resolver = proc do |vm, resolving_vm|
         if hostname = (vm.ssh_info && vm.ssh_info[:host])
-          `vagrant ssh roketi-mailserver1 -c "/sbin/ifconfig" | grep "inet addr" | head -n 1 | egrep -o "[0-9\.]+" | head -n 1 2>&1`.split("\n").first[/(\d+\.\d+\.\d+\.\d+)/, 1]
+          `vagrant ssh roketi-mailserver1 -c "facter ipaddress"`.split("\n").first[/(\d+\.\d+\.\d+\.\d+)/, 1]
         end
       end
 
@@ -134,12 +122,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # set Hostname
     node.vm.hostname =  "%s.#{domain}" % name.to_s
 
-    # install Dependencies
-    node.vm.provision "shell", inline: "echo 'deb http://ftp.ch.debian.org/debian wheezy main' > /etc/apt/sources.list"
-    node.vm.provision "shell", inline: "APTSRC=$(mktemp) && wget -q https://apt.puppetlabs.com/puppetlabs-release-wheezy.deb -O ${APTSRC} && dpkg -i ${APTSRC} && rm ${APTSRC}"
-    node.vm.provision "shell", inline: "apt-get update -qq && apt-get upgrade -y"
-    node.vm.provision "shell", inline: "apt-get install -y puppet"
- 
     # execute Puppet
     node.vm.provision "puppet" do |puppet|
       puppet.hiera_config_path = "puppet-data/hiera.yaml"

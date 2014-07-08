@@ -5,22 +5,21 @@
 
 * SSH
 * GIT
-* LXC
+* VirtualBox
 * Vagrant
     * http://www.vagrantup.com/downloads.html
 * Vagrant Plugins
 
 ```
 vagrant plugin install vagrant-cachier
-vagrant plugin install hostmanager
-vagrant plugin install vagrant-lxc
+vagrant plugin install vagrant-hostmanager
 ```
 
 
 ## Usage
 
 ```
-vagrant up --provider=lxc
+vagrant up
 vagrant provision (required due to some Host/Domainname related Bugs)
 vagrant halt
 vagrant destroy 
