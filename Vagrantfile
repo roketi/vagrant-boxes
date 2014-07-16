@@ -34,8 +34,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # execute Puppet
   config.vm.provision "puppet" do |puppet|
     puppet.hiera_config_path = "puppet-data/hiera.yaml"
-    puppet.manifests_path    = "puppet-data"
-    puppet.module_path       = "puppet-modules"
+    puppet.module_path       = "modules"
+    puppet.options           = "--parser future -e 'include base'"
   end
 
   # define Servers
