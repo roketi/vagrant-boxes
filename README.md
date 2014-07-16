@@ -14,11 +14,15 @@
 vagrant plugin install vagrant-cachier
 vagrant plugin install vagrant-hostmanager
 ```
-
+* librarian-puppet
+```
+gem install librarian-puppet
+```
 
 ## Usage
 
 ```
+librarian-puppet install
 vagrant up
 vagrant provision (required due to some Host/Domainname related Bugs)
 vagrant halt
