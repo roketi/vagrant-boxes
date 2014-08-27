@@ -1,9 +1,6 @@
-
-# TODO: make Configurable
+# roketi Panel
 
 class roketi::panel {
-
-	notify { "Hi! I'm the Roketi-Panel Server.": }
 
 	# Clone Panel
 	vcsrepo { '/var/www/panel':
@@ -12,22 +9,80 @@ class roketi::panel {
 		source   => 'https://github.com/roketi/panel.git',
 	}
 
+	# TODO
+	# composer install --dev
+	# chown www-data:
+	# ./flow behat:setup
+	# FLOW_CONTEXT=Development/Behat ./flow doctrine:migrate
+	# FLOW_CONTEXT=Development/Behat ./flow Roketi.Panel:setup:createadminuser --username "john.doe" --password "12345"
+	# FLOW_CONTEXT=Development/Behat ./flow flow:cache:warmup
+
 	# include nginx
 	class { 'nginx':
 		vhost_purge => true,
 		confd_purge => true,
 	}
 
-	# vHost for Panel
+	# nginx Configuration
 	nginx::resource::vhost { $fqdn:
-		www_root         => '/var/www/panel',
+		www_root         => '/var/www/panel/Web',
 	}
 
-	# PHP
-	# TODO: Install PHP, create FPM Pool and appropriate nginx Configuration
+	nginx::resource::location { "${fqdn}-fpm":
+		ensure              => present,
+		vhost               => $fqdn,
+		location            => '~ [^/]\.php(/|$)',
+		www_root            => '/var/www/panel/Web',
+		location_cfg_append => {
+			'fastcgi_param'           => 'PATH_INFO $fastcgi_path_info',
+			'fastcgi_param'           => 'SCRIPT_FILENAME $document_root$fastcgi_script_name',
+			'fastcgi_split_path_info' => '^(.+\.php)(/.+)$',
+			'fastcgi_pass'            => '127.0.0.1:9001',
+			'fastcgi_index'           => 'index.php',
+			'include'                 => 'fastcgi_params',
+		},
+	}
+
+	# include PHP
+	include php
+	class { [
+		'php::fpm',
+		'php::cli',
+		'php::extension::curl',
+		'php::extension::mysql',
+		'php::composer'
+	]: }
+
+	# PHP FPM Pool
+	php::fpm::pool { 'www-data':
+		listen  => '127.0.0.1:9001',
+		user    => 'www-data',
+		require => Package['nginx'],
+	}
+
+	# PHP FPM Configuration
+	php::fpm::config { 'Roketi PHP FPM Configure Time Zone':
+		setting => 'date.timezone',
+		value   => 'Europe/Zurich',
+		section => 'Date',
+	}
+
+	# PHP CLI Configuration
+	php::cli::config { 'Roketi PHP CLI Configure Time Zone':
+		setting => 'date.timezone',
+		value   => 'Europe/Zurich',
+		section => 'Date',
+	}
+
+	# include MySQL
+	class { '::mysql::server': }
 
 	# Database
-	# TODO: Create roketi Database
+	mysql::db { 'roketi_testing':
+		user     => 'roketi_testing',
+		password => 'roketi_testing',
+		host     => 'localhost',
+	}
 
 }
 
