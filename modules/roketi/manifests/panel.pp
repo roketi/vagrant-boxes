@@ -1,12 +1,17 @@
 # roketi Panel
 
-class roketi::panel {
+class roketi::panel (
+  $ensure           = present,
+  $install_location = '/var/www/panel',
+  $install_source   = 'https://github.com/roketi/panel.git',
+) {
 
 	# Clone Panel
-	vcsrepo { '/var/www/panel':
+	vcsrepo { "${install_location}":
 		ensure   => present,
 		provider => git,
-		source   => 'https://github.com/roketi/panel.git',
+		source   => "${install_source}",
+		notify   => Exec['panel-composer'],
 	}
 
 	# TODO
@@ -25,14 +30,14 @@ class roketi::panel {
 
 	# nginx Configuration
 	nginx::resource::vhost { $fqdn:
-		www_root         => '/var/www/panel/Web',
+		www_root         => "${install_location}/Web",
 	}
 
 	nginx::resource::location { "${fqdn}-fpm":
 		ensure              => present,
 		vhost               => $fqdn,
 		location            => '~ [^/]\.php(/|$)',
-		www_root            => '/var/www/panel/Web',
+		www_root            => "${install_location}/Web",
 		location_cfg_append => {
 			'fastcgi_param'           => 'PATH_INFO $fastcgi_path_info',
 			'fastcgi_param'           => 'SCRIPT_FILENAME $document_root$fastcgi_script_name',
