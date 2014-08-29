@@ -4,6 +4,12 @@ class roketi::panel (
   $ensure           = present,
   $install_location = '/var/www/panel',
   $install_source   = 'https://github.com/roketi/panel.git',
+  $flow_context     = 'Development',
+  $db_name          = 'roketi_dev',
+  $db_username      = 'roketi_dev',
+  $db_password      = 'roketi_dev',
+  $panel_username   = 'admin',
+  $panel_password   = 'changeme',
 ) {
 
 	# Clone Panel
@@ -11,16 +17,67 @@ class roketi::panel (
 		ensure   => present,
 		provider => git,
 		source   => "${install_source}",
-		notify   => Exec['panel-composer'],
+		notify   => Exec['panel_composer_install'],
 	}
 
-	# TODO
-	# composer install --dev
-	# chown www-data:
-	# ./flow behat:setup
-	# FLOW_CONTEXT=Development/Behat ./flow doctrine:migrate
-	# FLOW_CONTEXT=Development/Behat ./flow Roketi.Panel:setup:createadminuser --username "john.doe" --password "12345"
-	# FLOW_CONTEXT=Development/Behat ./flow flow:cache:warmup
+	# Flow Configuration
+	file { "${install_location}/Configuration/Development/Settings.yaml":
+		require => Vcsrepo["${install_location}"],
+		content => template('roketi/panel_flow_settings.yaml.erb'),
+		owner   => 'www-data',
+		group   => 'www-data',
+		mode    => '0600',
+	}
+
+	# Install dependencies
+	exec { 'panel_composer_install':
+		refreshonly => true,
+		require     => [ Vcsrepo["${install_location}"], Class['php::cli'], ],
+		environment => "COMPOSER_HOME=${install_location}",
+		command     => "/usr/local/bin/composer install --working-dir ${install_location}",
+		notify      => Exec['panel_behat_setup'],
+	}
+
+	# Setup Behat
+	exec { 'panel_behat_setup':
+		refreshonly => true,
+		require     => Exec['panel_composer_install'],
+		environment => "COMPOSER_HOME=${install_location}",
+		command     => "${install_location}/flow behat:setup",
+		notify      => Exec['panel_fix_permissions'],
+	}
+
+	# Fix permissions
+	exec { 'panel_fix_permissions':
+		refreshonly => true,
+		environment => "FLOW_CONTEXT=${flow_context}",
+		command     => "${install_location}/flow core:setfilepermissions vagrant www-data www-data",
+		notify      => Exec['panel_doctrine_migrate'],
+	}
+
+	# Setup DB Schema
+	exec { 'panel_doctrine_migrate':
+		refreshonly => true,
+		require     => [ Exec['panel_composer_install'], Mysql::Db["${db_name}"], ],
+		environment => "FLOW_CONTEXT=${flow_context}",
+		command     => "${install_location}/flow doctrine:migrate",
+		notify      => Exec['panel_admin_user'],
+	}
+
+	# Create Admin User
+	exec { 'panel_admin_user':
+		environment => "FLOW_CONTEXT=${flow_context}",
+		require     => Exec['panel_doctrine_migrate'],
+		refreshonly => true,
+		command     => "${install_location}/flow Roketi.Panel:setup:createadminuser --username '${panel_username}' --password '${panel_password}'",
+	}
+
+	# Cache Warmup
+	exec { 'panel_cache_warmup':
+		environment => "FLOW_CONTEXT=${flow_context}",
+		require     => Exec['panel_doctrine_migrate'],
+		command     => "${install_location}/flow flow:cache:warmup",
+	}
 
 	# include nginx
 	class { 'nginx':
@@ -83,9 +140,9 @@ class roketi::panel (
 	class { '::mysql::server': }
 
 	# Database
-	mysql::db { 'roketi_testing':
-		user     => 'roketi_testing',
-		password => 'roketi_testing',
+	mysql::db { "${db_name}":
+		user     => "${db_username}",
+		password => "${db_password}",
 		host     => 'localhost',
 	}
 
