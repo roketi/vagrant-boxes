@@ -1,7 +1,15 @@
 ---
 :backends:
   - yaml
+  - http
 :yaml:
   :datadir: '/vagrant/hiera'
+:http:
+  :host:    'panel.example.net'
+  :port:    '80'
+  :output:  'yaml'
+  :failure: 'graceful'
+  :paths:
+    - "/config/%{::fqdn}.yaml"
 :hierarchy:
   - "%{::hostname}"
