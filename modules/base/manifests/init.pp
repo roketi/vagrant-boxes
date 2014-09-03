@@ -2,6 +2,9 @@
 
 class base {
 
+	# Hiera Configuration
+	class { '::puppet::hiera_http': }
+
 	# additional Modules
 	hiera_include('base::modules', [''])
 	
